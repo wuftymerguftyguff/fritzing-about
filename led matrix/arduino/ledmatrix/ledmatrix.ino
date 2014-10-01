@@ -5,12 +5,17 @@
   This example code is in the public domain.
  */
  
+#include "font.h" 
+ 
 //Pin connected to Pin 12 of 74HC595 (Latch)
 int latchPin = 9;
 //Pin connected to Pin 11 of 74HC595 (Clock)
 int clockPin = 10;
 //Pin connected to Pin 14 of 74HC595 (Data)
 int dataPin = 11;
+
+uint8_t h[8];
+uint8_t j[8];
 
 
 // give it a name:
@@ -23,8 +28,26 @@ void setup() {
   pinMode(led0, OUTPUT);
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);  
-//  pinMode(led1, OUTPUT); 
+  pinMode(dataPin, OUTPUT); 
+  h[0] = B10000010;
+  h[1] = B10000010;
+  h[2] = B10000010;
+  h[3] = B11111110;
+  h[4] = B10000010;
+  h[5] = B10000010;
+  h[6] = B10000010;
+  h[7] = B10000010; 
+  
+  j[0] = B11111110;
+  j[1] = B00010000;
+  j[2] = B00010000;
+  j[3] = B00010000;
+  j[4] = B00010000;
+  j[5] = B10010000;
+  j[6] = B10010000;
+  j[7] = B01100000; 
+  
+  //pinMode(led1, OUTPUT); 
 }
 
 
@@ -60,21 +83,30 @@ void shiftOut(byte dataOut) {
 // the loop routine runs over and over again forever:
 void loop() {
   //count from 0 to 255
-  for (int i = 0; i < 254; i++) {
+ 
     //set latchPin low to allow data flow
-    digitalWrite(latchPin, LOW);
-    //for (int j = 0; j < 9; j++) {
-    shiftOut(0); 
-    //}
-    shiftOut(255); 
+   
+    int row=1;
+    int invrow;
+    for (int k = 0; k < 8 ; k++) {
+      invrow = row^255;
+      digitalWrite(latchPin, LOW);
+      shiftOut(invrow);
+      //shiftOut(h[k]); 
+      shiftOut(font_8x8[72-32][k]);
+      
+      digitalWrite(latchPin, HIGH);
+      row=row<<1;
+      //delay(200); 
+    
+    
     //set latchPin to high to lock and send data
-    digitalWrite(latchPin, HIGH);
-    //delay(1);
-  }
+    
+    }
 
   
   
-
+/*
   
 //just so we know it is still alive
   digitalWrite(led0, HIGH);   // turn the LED on (HIGH is the voltage level)
@@ -83,5 +115,7 @@ void loop() {
   digitalWrite(led0, LOW);    // turn the LED off by making the voltage LOW
 //  digitalWrite(led1, LOW);    // turn the LED off by making the voltage LOW
   delay(1000);               // wait for a second
+  
+  */
 
 }
