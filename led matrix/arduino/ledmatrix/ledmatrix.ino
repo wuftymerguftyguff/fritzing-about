@@ -6,6 +6,7 @@
  */
  
 #include "font.h" 
+#include <TimerOne.h>
  
 //Pin connected to Pin 12 of 74HC595 (Latch)
 int latchPin = 9;
@@ -14,8 +15,10 @@ int clockPin = 10;
 //Pin connected to Pin 14 of 74HC595 (Data)
 int dataPin = 11;
 
-uint8_t h[8];
-uint8_t j[8];
+uint8_t led[8];
+
+long previousMillis = 0;
+
 
 
 // give it a name:
@@ -29,27 +32,33 @@ void setup() {
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT); 
-  h[0] = B10000010;
-  h[1] = B10000010;
-  h[2] = B10000010;
-  h[3] = B11111110;
-  h[4] = B10000010;
-  h[5] = B10000010;
-  h[6] = B10000010;
-  h[7] = B10000010; 
-  
-  j[0] = B11111110;
-  j[1] = B00010000;
-  j[2] = B00010000;
-  j[3] = B00010000;
-  j[4] = B00010000;
-  j[5] = B10010000;
-  j[6] = B10010000;
-  j[7] = B01100000; 
-  
-  //pinMode(led1, OUTPUT); 
+  led[0] = B11111111;
+  led[1] = B11111111;
+  led[2] = B11111111;
+  led[3] = B11111111;
+  led[4] = B11111111;
+  led[5] = B11111111;
+  led[6] = B11111111;
+  led[7] = B11111111; 
+  Timer1.initialize(5000);
+  Timer1.attachInterrupt(screenUpdate);
+  //Serial.begin(115200);
+  //Serial.println("Starting");
 }
 
+void screenUpdate() {
+  uint8_t row = B10000000;
+   for(byte k = 0; k < 9; k++) {                                                                     
+    Serial.println(k);
+    // Open up the latch ready to receive data
+    digitalWrite(latchPin, LOW); 
+    shiftOut(~row ); 
+    shiftOut(led[k]); // LED array
+  // Close the latch, sending the data in the registers out to the matrix
+    digitalWrite(latchPin, HIGH);
+    row = row >> 1;
+    }
+  }
 
 
 void shiftOut(byte dataOut) {
@@ -80,32 +89,19 @@ void shiftOut(byte dataOut) {
   digitalWrite(clockPin, LOW);
 }
 
+int achar=48;
 // the loop routine runs over and over again forever:
 void loop() {
-  //count from 0 to 255
- 
-    //set latchPin low to allow data flow
-   
-    int row=1;
-    int invrow;
-    for (int k = 0; k < 8 ; k++) {
-      invrow = row^255;
-      digitalWrite(latchPin, LOW);
-      shiftOut(invrow);
-      //shiftOut(h[k]); 
-      shiftOut(font_8x8[72-32][k]);
-      
-      digitalWrite(latchPin, HIGH);
-      row=row<<1;
-      //delay(200); 
-    
-    
-    //set latchPin to high to lock and send data
-    
-    }
+          //Serial.println("Looping");          
+          //Serial.println(currentMillis - previousMillis);
+          unsigned long currentMillis = millis();
+          if( currentMillis - previousMillis > 500 ) { 
+             memcpy(&led[0],&font_8x8[achar-32],sizeof(led));
+             previousMillis = currentMillis;
+             achar++;
+           if ( achar > 122 ) achar=48;
+          }
 
-  
-  
 /*
   
 //just so we know it is still alive
