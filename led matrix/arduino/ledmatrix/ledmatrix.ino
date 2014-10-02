@@ -8,7 +8,8 @@
 #include "font.h" 
 #include <math.h>
 #include <TimerOne.h>
- 
+#define DISPLAYLENGTH 5
+
 //Pin connected to Pin 12 of 74HC595 (Latch)
 int latchPin = 9;
 //Pin connected to Pin 11 of 74HC595 (Clock)
@@ -20,7 +21,11 @@ uint8_t led[8];
 
 long previousMillis = 0;
 
+// create array to store the whole of the display in memory
+unsigned char display[DISPLAYLENGTH][8];
 
+// the message to display for now
+unsigned char message[] = "Hello'";
 
 // give it a name:
 int led0 = 13;
@@ -40,10 +45,29 @@ void setup() {
   led[4] = B11111111;
   led[5] = B11111111;
   led[6] = B11111111;
-  led[7] = B11111111; 
-  Timer1.initialize(4000);
+  led[7] = B11111111;
+ 
+ // fill the whole of the display with the default content 
+  cleardisplay();
+  
+  Timer1.initialize(10000);
   Timer1.attachInterrupt(screenUpdate);
-  selftest();
+  
+  //self test the display
+  //selftest();
+  updatedisplay();
+}
+
+
+void updatedisplay() {
+  for (int i=0;i<DISPLAYLENGTH;i++) {
+            int letter = (int) message[i];
+            memcpy(&display[i],&font_8x8[letter-32],sizeof(led));
+  }
+}
+
+void cleardisplay() {
+  memset(&display[0], 0x00, sizeof(display));
 }
 
 void selftest() {
@@ -110,12 +134,18 @@ void loop() {
           //Serial.println("Looping");          
           //Serial.println(currentMillis - previousMillis);
           unsigned long currentMillis = millis();
-          if( currentMillis - previousMillis > 500 ) { 
+          if( currentMillis - previousMillis > 500 ) {
+            memcpy(&led[0],&display[0]+2,sizeof(led));
+            previousMillis = currentMillis;
+           }
+           /* 
              memcpy(&led[0],&font_8x8[achar-32],sizeof(led));
              previousMillis = currentMillis;
              achar++;
+           
            if ( achar > 122 ) achar=48;
-          }
+           */
+          
 
 /*
   
