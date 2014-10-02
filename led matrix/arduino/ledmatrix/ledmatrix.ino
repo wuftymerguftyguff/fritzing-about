@@ -6,6 +6,7 @@
  */
  
 #include "font.h" 
+#include <math.h>
 #include <TimerOne.h>
  
 //Pin connected to Pin 12 of 74HC595 (Latch)
@@ -40,7 +41,7 @@ void setup() {
   led[5] = B11111111;
   led[6] = B11111111;
   led[7] = B11111111; 
-  Timer1.initialize(5000);
+  Timer1.initialize(4000);
   Timer1.attachInterrupt(screenUpdate);
   selftest();
 }
@@ -50,7 +51,13 @@ void selftest() {
     for (int k = 0; k < 9; k++) { 
       led[k] = ~led[k];
     }
-    delay(1000);
+    delay(200);
+  }
+  for (int k = 0; k < 8; k++) { 
+    for (int j = 0; j < 9; j++) {
+     led[k] =  pow(2,j);
+     delay(20);
+    }
   }
 }
 
