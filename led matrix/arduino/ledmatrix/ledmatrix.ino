@@ -59,7 +59,7 @@ void setup() {
  // fill the whole of the display with the default content 
   cleardisplay();
   
-  Timer1.initialize(3000);
+  Timer1.initialize(2900);
   Timer1.pwm(11, 1024);  
   Timer1.attachInterrupt(screenUpdate);
   
