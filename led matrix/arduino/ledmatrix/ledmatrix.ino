@@ -40,7 +40,7 @@ int led0 = 13;
 // the setup routine runs once when you press reset:
 void setup() {                
   // initialize the digital pin as an output.
-  Serial.begin(115200);
+  //Serial.begin(115200);
   pinMode(led0, OUTPUT);
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -57,7 +57,7 @@ void setup() {
  // fill the whole of the display with the default content 
   cleardisplay();
   
-  Timer1.initialize(10000);
+  Timer1.initialize(4000);
   Timer1.pwm(11, 1024);  
   Timer1.attachInterrupt(screenUpdate);
   
