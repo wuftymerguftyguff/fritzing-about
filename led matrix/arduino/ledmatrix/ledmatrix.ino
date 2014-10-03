@@ -25,7 +25,7 @@ long previousMillis = 0;
 unsigned char display[DISPLAYLENGTH][8];
 
 // the message to display for now
-unsigned char message[] = " HELLO ";
+unsigned char message[] = " Hello ";
 
 // the number of columns in the display
 int displayColumns = DISPLAYLENGTH * 8;
