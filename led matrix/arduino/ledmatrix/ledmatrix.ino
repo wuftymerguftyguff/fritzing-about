@@ -25,7 +25,7 @@ long previousMillis = 0;
 unsigned char display[DISPLAYLENGTH][8];
 
 // the message to display for now
-unsigned char message[] = " Hello ";
+unsigned char message[] = " HELLO ";
 
 // the number of columns in the display
 int displayColumns = DISPLAYLENGTH * 8;
@@ -35,6 +35,7 @@ volatile int currentColumn = 0;
 
 // give it a name:
 int led0 = 13;
+volatile boolean ledState = LOW;
 //int led1 = 9;
 
 // the setup routine runs once when you press reset:
@@ -45,6 +46,7 @@ void setup() {
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT); 
+  //display start state (all on)
   led[0] = B11111111;
   led[1] = B11111111;
   led[2] = B11111111;
@@ -57,7 +59,7 @@ void setup() {
  // fill the whole of the display with the default content 
   cleardisplay();
   
-  Timer1.initialize(4000);
+  Timer1.initialize(3000);
   Timer1.pwm(11, 1024);  
   Timer1.attachInterrupt(screenUpdate);
   
@@ -158,35 +160,17 @@ void updateDisplay(int column) {
 int achar=48;
 // the loop routine runs over and over again forever:
 void loop() {
-          //Serial.println("Looping");          
-          //Serial.println(currentMillis - previousMillis);
-          unsigned long currentMillis = millis();
+  
+          
+          unsigned long currentMillis = millis();          
           if( currentMillis - previousMillis > 50 ) {
             updateDisplay(currentColumn);
             currentColumn++;
             if ( currentColumn > displayColumns - 8 ) currentColumn=0;
+            ledState = !ledState;
+            digitalWrite(led0, ledState);
             previousMillis = currentMillis;
            }
-           /* 
-             memcpy(&led[0],&font_8x8[achar-32],sizeof(led));
-             previousMillis = currentMillis;
-             achar++;
-           
-           if ( achar > 122 ) achar=48;
-           */
-          
-
-/*
-  
-//just so we know it is still alive
-  digitalWrite(led0, HIGH);   // turn the LED on (HIGH is the voltage level)
-//  digitalWrite(led1, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(200);               // wait for a second
-  digitalWrite(led0, LOW);    // turn the LED off by making the voltage LOW
-//  digitalWrite(led1, LOW);    // turn the LED off by making the voltage LOW
-  delay(200);               // wait for a second
-
-*/  
-
+        
 
 }
