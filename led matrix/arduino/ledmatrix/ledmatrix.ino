@@ -8,7 +8,7 @@
 #include "font.h" 
 #include <math.h>
 #include <TimerOne.h>
-#define DISPLAYLENGTH 5
+#define DISPLAYLENGTH 7
 
 //Pin connected to Pin 12 of 74HC595 (Latch)
 int latchPin = 9;
@@ -25,7 +25,13 @@ long previousMillis = 0;
 unsigned char display[DISPLAYLENGTH][8];
 
 // the message to display for now
-unsigned char message[] = "Hello'";
+unsigned char message[] = " Hello ";
+
+// the number of columns in the display
+int displayColumns = DISPLAYLENGTH * 8;
+
+// the first column of the display that we are displaying
+volatile int currentColumn = 0;
 
 // give it a name:
 int led0 = 13;
@@ -34,6 +40,7 @@ int led0 = 13;
 // the setup routine runs once when you press reset:
 void setup() {                
   // initialize the digital pin as an output.
+  Serial.begin(115200);
   pinMode(led0, OUTPUT);
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -51,20 +58,23 @@ void setup() {
   cleardisplay();
   
   Timer1.initialize(10000);
+  Timer1.pwm(11, 1024);  
   Timer1.attachInterrupt(screenUpdate);
   
   //self test the display
-  //selftest();
-  updatedisplay();
+  selftest();
+  writeToDisplay();
 }
 
 
-void updatedisplay() {
+void writeToDisplay() {
   for (int i=0;i<DISPLAYLENGTH;i++) {
             int letter = (int) message[i];
             memcpy(&display[i],&font_8x8[letter-32],sizeof(led));
   }
 }
+
+
 
 void cleardisplay() {
   memset(&display[0], 0x00, sizeof(display));
@@ -88,7 +98,7 @@ void selftest() {
 void screenUpdate() {
   uint8_t row = B10000000;
    for(byte k = 0; k < 9; k++) {                                                                     
-    Serial.println(k);
+    //Serial.println(k);
     // Open up the latch ready to receive data
     digitalWrite(latchPin, LOW); 
     shiftOut(~row ); 
@@ -128,14 +138,33 @@ void shiftOut(byte dataOut) {
   digitalWrite(clockPin, LOW);
 }
 
+void updateDisplay(int column) {
+  unsigned char *char1;
+  unsigned char *charbuffer;
+  int firstchar;
+  int columnBitOffset = column % 8;
+  if ( columnBitOffset != 0) {  // if we are not exactly aligned with char boundary in the display start processing at out bit offset inside that char
+    firstchar = column / 8;  //which char does the current column start in?
+    char1 = display[firstchar]; // grab that char from the display
+    char1 += columnBitOffset; // now move over how many bytes we are offsetby
+    charbuffer = char1;  // and write it to the charbuffer
+ 
+  } else { // if we aligned with complete char then just grab that char to the charbuffer
+    charbuffer =  display[column / 8];
+  }
+  memcpy(&led[0],charbuffer,sizeof(led));  //copy the charbugger to the pysical display memory map.
+}
+
 int achar=48;
 // the loop routine runs over and over again forever:
 void loop() {
           //Serial.println("Looping");          
           //Serial.println(currentMillis - previousMillis);
           unsigned long currentMillis = millis();
-          if( currentMillis - previousMillis > 500 ) {
-            memcpy(&led[0],&display[0]+2,sizeof(led));
+          if( currentMillis - previousMillis > 50 ) {
+            updateDisplay(currentColumn);
+            currentColumn++;
+            if ( currentColumn > displayColumns - 8 ) currentColumn=0;
             previousMillis = currentMillis;
            }
            /* 
@@ -152,11 +181,12 @@ void loop() {
 //just so we know it is still alive
   digitalWrite(led0, HIGH);   // turn the LED on (HIGH is the voltage level)
 //  digitalWrite(led1, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1000);               // wait for a second
+  delay(200);               // wait for a second
   digitalWrite(led0, LOW);    // turn the LED off by making the voltage LOW
 //  digitalWrite(led1, LOW);    // turn the LED off by making the voltage LOW
-  delay(1000);               // wait for a second
-  
-  */
+  delay(200);               // wait for a second
+
+*/  
+
 
 }
