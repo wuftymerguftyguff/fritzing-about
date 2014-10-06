@@ -33,14 +33,8 @@ D1088BRG::D1088BRG(uint8_t latchPin,uint8_t clockPin,uint8_t dataPin)
   unsigned char _display[DISPLAYLENGTH][8];
   _displayColumns = DISPLAYLENGTH * 8;
   _ledState = false;
-  unsigned char message[7] = "Hello.";
-  
-  
-    
-  _clearDisplay();
-    
-  
-    
+  //unsigned char *message = "H";
+  //unsigned char pants[] = "Pants";
 }
 
 void D1088BRG::initialize() {
@@ -53,9 +47,10 @@ void D1088BRG::initialize() {
   TIMSK1 |= _BV(TOIE1); // Enable Timer1 interrupt
   sei();                // Enable global interrupts
   // End Timer1 Setup
-  
+  _clearDisplay();
   _selftest();
-  writeToDisplay();
+  _clearDisplay();
+  //writeToDisplay();
  
 }
 
@@ -71,18 +66,20 @@ ISR(TIMER1_OVF_vect) { // ISR_BLOCK important -- see notes later
   TIFR1 |= TOV1;                  // Clear Timer1 interrupt flag
 } 
 
-void D1088BRG::writeToDisplay() {
-    for (int i=0;i<DISPLAYLENGTH;i++) {
+void D1088BRG::writeToDisplay(char *message,int msgSz) {
+        _clearDisplay();
+    //unsigned char message[DISPLAYLENGTH]= " Pants! ";
+        for (int i=0;i<msgSz-1;i++) {
         int letter = (int) message[i];
+        Serial.println(letter);
         memcpy(&_display[i],&font_8x8[letter-32],sizeof(_led));
-		//memcpy(&_led[0],0xFF,sizeof(_led));
-    }
+	    }
 }
 
 
 void D1088BRG::_clearDisplay() {
-    memset(&_display[0], 0x00, sizeof(_display));
-	memset(&_led[0], 0xFF, sizeof(_led));
+    memset(&_display, 0x00, sizeof(_display));
+	//memset(&_led[0], 0xFF, sizeof(_led));
 	//memcpy(&_led[0],&font_8x8[33-32],sizeof(_led));
 }
 
@@ -122,7 +119,7 @@ void D1088BRG::_shiftOut(byte dataOut) {
     digitalWrite(_dataPin, LOW);
     digitalWrite(_clockPin, LOW);
     // for each bit in dataOut send out a bit
-    for (int i=0; i<=7; i++) {
+    for (int i=0; i<8; i++) {
         //set clockPin to LOW prior to sending bit
         digitalWrite(_clockPin, LOW);
         // if the value of DataOut and (logical AND) a bitmask

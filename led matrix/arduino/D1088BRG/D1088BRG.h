@@ -12,7 +12,7 @@
 
 
 
-#define DISPLAYLENGTH 8
+#define DISPLAYLENGTH 20
 
 //class TimerOne;
 
@@ -20,13 +20,13 @@ class D1088BRG
 {
   public:
     D1088BRG(uint8_t latchPin,uint8_t clockPin,uint8_t dataPin);
-    unsigned char message[];
+    unsigned char *message[];
     void _screenUpdate();
     static void _screenUpdate_wrapper();
     void _selftest();
     uint8_t getLED();
     void update();
-	void writeToDisplay();
+	void writeToDisplay(char *message,int msgSz);
 	void initialize();
   private:
     uint8_t _latchPin;

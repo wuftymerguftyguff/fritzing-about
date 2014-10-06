@@ -12,8 +12,10 @@ int dataPin = 11;
 D1088BRG D1088BRG(latchPin,clockPin,dataPin);
 
 void setup() {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   D1088BRG.initialize();
+  char msg[] = " Hello! ";
+  D1088BRG.writeToDisplay(msg,sizeof(msg));
 }
 
 void loop() {
