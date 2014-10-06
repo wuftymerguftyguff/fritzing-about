@@ -12,7 +12,7 @@
 #include <TimerOne.h>
 #include "D1088BRG.h"
 
-D1088BRG interruptObject = NULL;
+/* D1088BRG interruptObject = NULL; */
 
 
 
@@ -38,19 +38,19 @@ D1088BRG::D1088BRG(uint8_t latchPin,uint8_t clockPin,uint8_t dataPin)
     
   Timer1.initialize(10000);
   Timer1.pwm(11, 1024);
-  interruptObject = this;
+  //interruptObject = this;
   //Timer1.attachInterrupt(_screenUpdate_wrapper);
   //_selftest();
   //_writeToDisplay();
     
 }
 
-void D1088BRG::_screenUpdate_wrapper()
+/* void D1088BRG::_screenUpdate_wrapper()
 {
     if (interruptObject) {
         interruptObject->_screenUpdate();
     }
-}
+} */
 
 void D1088BRG::_writeToDisplay() {
     for (int i=0;i<DISPLAYLENGTH;i++) {
