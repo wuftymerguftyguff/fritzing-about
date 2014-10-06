@@ -8,24 +8,26 @@
 #include "Arduino.h"
 #include <inttypes.h>
 //TimerOne for Timer interrupt
-//#include <TimerOne.h>
+#include <TimerOne.h>
 
 
 
 #define DISPLAYLENGTH 8
 
-class TimerOne;
+//class TimerOne;
 
 class D1088BRG
 {
   public:
     D1088BRG(uint8_t latchPin,uint8_t clockPin,uint8_t dataPin);
-    unsigned char message[8];
+    unsigned char message[];
     void _screenUpdate();
     static void _screenUpdate_wrapper();
     void _selftest();
     uint8_t getLED();
     void update();
+	void writeToDisplay();
+	void initialize();
   private:
     uint8_t _latchPin;
     uint8_t _clockPin;
@@ -33,10 +35,11 @@ class D1088BRG
     uint8_t _led[8];
     bool _ledState;
     unsigned long _previousMillis;
+	uint8_t _currentColumn;
     unsigned char _display[DISPLAYLENGTH][8];
     int _displayColumns;
     
-    void _writeToDisplay();
+    
     void _clearDisplay();
  
     
