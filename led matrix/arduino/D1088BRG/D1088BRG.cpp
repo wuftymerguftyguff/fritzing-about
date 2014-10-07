@@ -27,6 +27,7 @@ D1088BRG::D1088BRG(uint8_t latchPin,uint8_t clockPin,uint8_t dataPin)
   _dataPin = dataPin;
   _previousMillis = 0;
   _currentColumn = 0;
+  volatile bool doScreenUpdate = false;
   unsigned char _led[8];
   unsigned char _display[DISPLAYLENGTH][8];
   _displayColumns = DISPLAYLENGTH * 8;
@@ -37,11 +38,14 @@ D1088BRG::D1088BRG(uint8_t latchPin,uint8_t clockPin,uint8_t dataPin)
 
 void D1088BRG::initialize() {
   interruptObject = this;  //for interrupt handler
+    
   
-  // Set up Timer1 for interrupt:
+  /* // Set up Timer1 for interrupt:
+    
+    
   TCCR1A  = _BV(WGM11); // Mode 14 (fast PWM), OC1A off
   TCCR1B  = _BV(WGM13) | _BV(WGM12) | _BV(CS10); // Mode 14, no prescale
-  ICR1    = 10000;
+  //ICR1    = 1000000;
   TIMSK1 |= _BV(TOIE1); // Enable Timer1 interrupt
   sei();                // Enable global interrupts
   // End Timer1 Setup
@@ -49,6 +53,21 @@ void D1088BRG::initialize() {
   _selftest();
   _clearDisplay();
   //writeToDisplay();
+   */
+    
+    // initialize Timer1
+    cli();             // disable global interrupts
+    TCCR1A = 0;        // set entire TCCR1A register to 0
+    TCCR1B = 0;
+    
+    // enable Timer1 overflow interrupt:
+    TIMSK1 = (1 << TOIE1);
+    // Set CS10 bit so timer runs at clock speed:
+    //TCCR1B |= (1 << CS10);
+    TCCR1B |= (1 << CS11);
+    //TCCR1B |= (1 << CS12);
+    // enable global interrupts:
+    sei();
  
 }
 
@@ -60,16 +79,16 @@ void D1088BRG::_screenUpdate_wrapper()
 }
 
 ISR(TIMER1_OVF_vect) { // ISR_BLOCK important -- see notes later
-  interruptObject->_screenUpdate();   // Call refresh func for active display
+  D1088BRG::_screenUpdate_wrapper();  // Call refresh func for active display
   TIFR1 |= TOV1;                  // Clear Timer1 interrupt flag
 } 
 
 void D1088BRG::writeToDisplay(char *message,int msgSz) {
-        _clearDisplay();
+        //_clearDisplay();
     //unsigned char message[DISPLAYLENGTH]= " Pants! ";
         for (int i=0;i<msgSz-1;i++) {
         int letter = (int) message[i];
-        Serial.println(letter);
+        //Serial.println(letter);
         memcpy(&_display[i],&font_8x8[letter-32],sizeof(_led));
 	    }
 }
@@ -160,12 +179,12 @@ void D1088BRG::_updateDisplay(int column) {
 
 void D1088BRG::update() {
     unsigned long currentMillis = millis();
-    if( currentMillis - _previousMillis > 50 ) {
+    if( currentMillis - _previousMillis > 100 ) {
         _updateDisplay(_currentColumn);
         _currentColumn++;
         if ( _currentColumn > _displayColumns - 8 ) _currentColumn=0;
-        _ledState = !_ledState;
-        digitalWrite(13, _ledState);
+  //      _ledState = !_ledState;
+  //      digitalWrite(13, _ledState);
         _previousMillis = currentMillis;
    }
 

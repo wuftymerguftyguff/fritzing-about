@@ -13,7 +13,7 @@
 
 
 
-#define DISPLAYLENGTH 20
+#define DISPLAYLENGTH 21
 
 //class TimerOne;
 
@@ -24,6 +24,7 @@ class D1088BRG
     unsigned char *message[];
     void _screenUpdate();
     static void _screenUpdate_wrapper();
+    volatile bool doScreenUpdate;
     void _selftest();
     uint8_t getLED();
     void update();

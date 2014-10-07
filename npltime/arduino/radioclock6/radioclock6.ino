@@ -1,3 +1,4 @@
+#include <D1088BRG.h>
 #include <stdio.h>
 #define wwvbPin 2
 #define ledPin 13
@@ -10,6 +11,18 @@
 #define SAVED_B_BUFFER 3
 
 #define CURRENTCENTURY 20
+
+//#define DEBUG 1
+
+
+//Pin connected to Pin 12 of 74HC595 (Latch)
+int latchPin = 9;
+//Pin connected to Pin 11 of 74HC595 (Clock)
+int clockPin = 10;
+//Pin connected to Pin 14 of 74HC595 (Data)
+int dataPin = 11;
+
+D1088BRG D1088BRG(latchPin,clockPin,dataPin);
 
 //#define NPLYEAR 0
 
@@ -220,8 +233,8 @@ void printBufferBits() {
 }
 
 void printTime() {
-  char buffer [20];
-  sprintf(buffer, "%02d/%02d/20%02d %02d:%02d:%02d", getTimeVal(NPLDAY),
+  char buffer [21];
+  sprintf(buffer, " %02d/%02d/20%02d %02d:%02d:%02d ", getTimeVal(NPLDAY),
                                       getTimeVal(NPLMONTH),
                                       getTimeVal(NPLYEAR),
                                       getTimeVal(NPLHOUR),
@@ -229,6 +242,7 @@ void printTime() {
                                       secondOffset                            
   );
   Serial.println(buffer);
+  D1088BRG.writeToDisplay(buffer,sizeof(buffer));
 }
 
 int getTimeVal(struct timeElement element) {
@@ -322,6 +336,11 @@ void fillBuffers(bool A,bool B) {
 }
   
 void setup() {
+
+D1088BRG.initialize();
+char msg[] = " Hello Message ";
+D1088BRG.writeToDisplay(msg,sizeof(msg));  
+
 // this looks reversed as the module reversed the serial output of the carrier state
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
@@ -355,9 +374,10 @@ void loop() {
       Serial.print(second[i]); 
     }
     Serial.print("\n");
+    printBufferBits();
 #endif
     
-    //printBufferBits();
+    
     
         
 #ifdef DEBUG
@@ -378,6 +398,6 @@ void loop() {
   }
   
  
- 
+D1088BRG.update(); 
 }
 
