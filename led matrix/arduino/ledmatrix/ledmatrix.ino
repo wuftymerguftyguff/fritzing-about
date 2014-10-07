@@ -8,7 +8,8 @@
 #include "font.h" 
 #include <math.h>
 #include <TimerOne.h>
-#define DISPLAYLENGTH 7
+#define DISPLAYLENGTH 8
+
 
 //Pin connected to Pin 12 of 74HC595 (Latch)
 int latchPin = 9;
@@ -25,7 +26,7 @@ long previousMillis = 0;
 unsigned char display[DISPLAYLENGTH][8];
 
 // the message to display for now
-unsigned char message[] = " Hello ";
+unsigned char message[] = " Hello! ";
 
 // the number of columns in the display
 int displayColumns = DISPLAYLENGTH * 8;
