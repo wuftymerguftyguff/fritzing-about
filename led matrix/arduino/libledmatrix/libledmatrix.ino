@@ -1,5 +1,5 @@
 #include <D1088BRG.h>
-//#include <TimerOne.h>
+//#include <TimerOne.h>                                                          `  
 
 
 //Pin connected to Pin 12 of 74HC595 (Latch)
@@ -14,7 +14,7 @@ D1088BRG D1088BRG(latchPin,clockPin,dataPin);
 void setup() {
   Serial.begin(9600);
   D1088BRG.initialize();
-  char msg[] = " Hello! ";
+  char msg[] = " Hello Message ";
   D1088BRG.writeToDisplay(msg,sizeof(msg));
 }
 

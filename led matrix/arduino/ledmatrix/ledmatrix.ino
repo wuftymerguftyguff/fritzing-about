@@ -10,6 +10,7 @@
 #include <TimerOne.h>
 #define DISPLAYLENGTH 8
 
+
 //Pin connected to Pin 12 of 74HC595 (Latch)
 int latchPin = 9;
 //Pin connected to Pin 11 of 74HC595 (Clock)

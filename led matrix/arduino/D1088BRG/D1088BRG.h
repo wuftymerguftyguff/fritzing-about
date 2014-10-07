@@ -6,9 +6,10 @@
 #define D1088BRG_h
 
 #include "Arduino.h"
-#include <inttypes.h>
+//#include <font.h>
+//#include <inttypes.h>
 //TimerOne for Timer interrupt
-#include <TimerOne.h>
+//#include <TimerOne.h>
 
 
 

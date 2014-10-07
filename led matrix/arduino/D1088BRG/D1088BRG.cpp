@@ -4,15 +4,13 @@
   Released into the public domain.
 */
 
-#include "Arduino.h"
+//#include "Arduino.h"
 // math lib for pow
-#include <math.h>
+//#include <math.h>
 // the fonts
-#include <font.h>
-#include <TimerOne.h>
+#include <D1088BRG_font.h>
+//#include <TimerOne.h>
 #include "D1088BRG.h"
-
-
 
 static D1088BRG *interruptObject = NULL; 
 
@@ -41,8 +39,8 @@ void D1088BRG::initialize() {
   interruptObject = this;  //for interrupt handler
   
   // Set up Timer1 for interrupt:
-  //TCCR1A  = _BV(WGM11); // Mode 14 (fast PWM), OC1A off
-  //TCCR1B  = _BV(WGM13) | _BV(WGM12) | _BV(CS10); // Mode 14, no prescale
+  TCCR1A  = _BV(WGM11); // Mode 14 (fast PWM), OC1A off
+  TCCR1B  = _BV(WGM13) | _BV(WGM12) | _BV(CS10); // Mode 14, no prescale
   ICR1    = 10000;
   TIMSK1 |= _BV(TOIE1); // Enable Timer1 interrupt
   sei();                // Enable global interrupts
@@ -79,7 +77,7 @@ void D1088BRG::writeToDisplay(char *message,int msgSz) {
 
 void D1088BRG::_clearDisplay() {
     memset(&_display, 0x00, sizeof(_display));
-	//memset(&_led[0], 0xFF, sizeof(_led));
+	memset(&_led[0], 0xFF, sizeof(_led));
 	//memcpy(&_led[0],&font_8x8[33-32],sizeof(_led));
 }
 
