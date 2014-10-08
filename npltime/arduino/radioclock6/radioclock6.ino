@@ -232,8 +232,21 @@ void printBufferBits() {
   
 }
 
+uint8_t nmeaChecksum(char arr[]) {
+  uint8_t sum = 0x00;
+  if (arr[0] != 36) return sum;
+  int cnt = 1;
+  while (true) {
+    if (arr[cnt] == 42) return sum;
+    sum = sum^arr[cnt];
+    cnt++;
+  }
+}
+
 void printTime() {
-  char buffer [21];
+  char buffer [30];
+  // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
+  /*
   sprintf(buffer, " %02d/%02d/20%02d %02d:%02d:%02d ", getTimeVal(NPLDAY),
                                       getTimeVal(NPLMONTH),
                                       getTimeVal(NPLYEAR),
@@ -241,7 +254,18 @@ void printTime() {
                                       getTimeVal(NPLMINUTE),
                                       secondOffset                            
   );
+  */
+   // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
+  sprintf(buffer, "$GPZDA,%02d%02d%02d.00,%02d,%02d,%02d,+1,00*",
+                       getTimeVal(NPLHOUR),
+                       getTimeVal(NPLMINUTE),
+                       secondOffset,
+                       getTimeVal(NPLDAY),
+                       getTimeVal(NPLMONTH),
+                       getTimeVal(NPLYEAR));
+  sprintf(buffer,"%s%02x",buffer,nmeaChecksum(buffer));
   Serial.println(buffer);
+  //Serial.println(nmeaChecksum(buffer));
   D1088BRG.writeToDisplay(buffer,sizeof(buffer));
 }
 
