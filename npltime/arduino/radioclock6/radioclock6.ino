@@ -1,3 +1,4 @@
+#include <D1088BRG.h>
 #include <stdio.h>
 #define wwvbPin 2
 #define ledPin 13
@@ -10,6 +11,18 @@
 #define SAVED_B_BUFFER 3
 
 #define CURRENTCENTURY 20
+
+//#define DEBUG 1
+
+
+//Pin connected to Pin 12 of 74HC595 (Latch)
+int latchPin = 9;
+//Pin connected to Pin 11 of 74HC595 (Clock)
+int clockPin = 10;
+//Pin connected to Pin 14 of 74HC595 (Data)
+int dataPin = 11;
+
+D1088BRG D1088BRG(latchPin,clockPin,dataPin);
 
 //#define NPLYEAR 0
 
@@ -219,16 +232,64 @@ void printBufferBits() {
   
 }
 
+uint8_t nmeaChecksum(char arr[]) {
+  uint8_t sum = 0x00;
+  if (arr[0] != 36) return sum;
+  int cnt = 1;
+  while (true) {
+    if (arr[cnt] == 42) return sum;
+    sum = sum^arr[cnt];
+    cnt++;
+  }
+}
+
 void printTime() {
-  char buffer [20];
-  sprintf(buffer, "%02d/%02d/20%02d %02d:%02d:%02d", getTimeVal(NPLDAY),
+  char buffer [DISPLAYLENGTH];
+  int nplHour = getTimeVal(NPLHOUR) - 1;
+  int nplMinute = getTimeVal(NPLMINUTE);
+  int nplDay = getTimeVal(NPLDAY);
+  int nplMonth = getTimeVal(NPLMONTH);
+  int nplYear = getTimeVal(NPLYEAR);
+  // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
+  /*
+  sprintf(buffer, " %02d/%02d/20%02d %02d:%02d:%02d ", getTimeVal(NPLDAY),
                                       getTimeVal(NPLMONTH),
                                       getTimeVal(NPLYEAR),
                                       getTimeVal(NPLHOUR),
                                       getTimeVal(NPLMINUTE),
                                       secondOffset                            
   );
+ */
+
+   // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
+  sprintf(buffer, "$GPZDA,%02d%02d%02d.00,%02d,%02d,20%02d,+1,00*",
+                       nplHour,
+                       nplMinute,
+                       secondOffset,
+                       nplDay,
+                       nplMonth,
+                       nplYear);
+
+  sprintf(buffer,"%s%02x",buffer,nmeaChecksum(buffer));
   Serial.println(buffer);
+  
+  //"$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*");
+  //Serial.println("$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*");
+   sprintf(buffer, "$GPRMC,%02d%02d%02d,A,4916.45,N,12311.12,W,000.5,054.7,%02d%02d%02d,020.3,E*",
+                     nplHour,
+                     nplMinute,
+                     secondOffset,
+                     nplDay,
+                     nplMonth,
+                     nplYear);
+  sprintf(buffer,"%s%02x",buffer,nmeaChecksum(buffer));
+  Serial.println(buffer);
+                     
+ 
+  //Serial.println(nmeaChecksum(buffer));
+  D1088BRG.writeToDisplay(buffer,sizeof(buffer));
+
+  
 }
 
 int getTimeVal(struct timeElement element) {
@@ -322,11 +383,16 @@ void fillBuffers(bool A,bool B) {
 }
   
 void setup() {
+
+D1088BRG.initialize();
+char msg[] = " Hello Message ";
+D1088BRG.writeToDisplay(msg,sizeof(msg));  
+
 // this looks reversed as the module reversed the serial output of the carrier state
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
 
-Serial.begin(115200);           // set up Serial library at 19200 bps
+Serial.begin(9600);           // set up Serial library at 19200 bps
 Serial.println("Clock Starting");  // Say something to show we have restarted.
 pinMode(ledPin, OUTPUT); // set up the ledpin
 // set all the values of the current second to 1
@@ -355,9 +421,10 @@ void loop() {
       Serial.print(second[i]); 
     }
     Serial.print("\n");
+    printBufferBits();
 #endif
     
-    //printBufferBits();
+    
     
         
 #ifdef DEBUG
@@ -378,6 +445,6 @@ void loop() {
   }
   
  
- 
+D1088BRG.update(); 
 }
 
