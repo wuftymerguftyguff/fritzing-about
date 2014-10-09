@@ -244,7 +244,12 @@ uint8_t nmeaChecksum(char arr[]) {
 }
 
 void printTime() {
-  char buffer [30];
+  char buffer [DISPLAYLENGTH];
+  int nplHour = getTimeVal(NPLHOUR) - 1;
+  int nplMinute = getTimeVal(NPLMINUTE);
+  int nplDay = getTimeVal(NPLDAY);
+  int nplMonth = getTimeVal(NPLMONTH);
+  int nplYear = getTimeVal(NPLYEAR);
   // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
   /*
   sprintf(buffer, " %02d/%02d/20%02d %02d:%02d:%02d ", getTimeVal(NPLDAY),
@@ -254,19 +259,37 @@ void printTime() {
                                       getTimeVal(NPLMINUTE),
                                       secondOffset                            
   );
-  */
+ */
+
    // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
-  sprintf(buffer, "$GPZDA,%02d%02d%02d.00,%02d,%02d,%02d,+1,00*",
-                       getTimeVal(NPLHOUR),
-                       getTimeVal(NPLMINUTE),
+  sprintf(buffer, "$GPZDA,%02d%02d%02d.00,%02d,%02d,20%02d,+1,00*",
+                       nplHour,
+                       nplMinute,
                        secondOffset,
-                       getTimeVal(NPLDAY),
-                       getTimeVal(NPLMONTH),
-                       getTimeVal(NPLYEAR));
+                       nplDay,
+                       nplMonth,
+                       nplYear);
+
   sprintf(buffer,"%s%02x",buffer,nmeaChecksum(buffer));
   Serial.println(buffer);
+  
+  //"$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*");
+  //Serial.println("$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*");
+   sprintf(buffer, "$GPRMC,%02d%02d%02d,A,4916.45,N,12311.12,W,000.5,054.7,%02d%02d%02d,020.3,E*",
+                     nplHour,
+                     nplMinute,
+                     secondOffset,
+                     nplDay,
+                     nplMonth,
+                     nplYear);
+  sprintf(buffer,"%s%02x",buffer,nmeaChecksum(buffer));
+  Serial.println(buffer);
+                     
+ 
   //Serial.println(nmeaChecksum(buffer));
   D1088BRG.writeToDisplay(buffer,sizeof(buffer));
+
+  
 }
 
 int getTimeVal(struct timeElement element) {
@@ -369,7 +392,7 @@ D1088BRG.writeToDisplay(msg,sizeof(msg));
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
 
-Serial.begin(115200);           // set up Serial library at 19200 bps
+Serial.begin(9600);           // set up Serial library at 19200 bps
 Serial.println("Clock Starting");  // Say something to show we have restarted.
 pinMode(ledPin, OUTPUT); // set up the ledpin
 // set all the values of the current second to 1
