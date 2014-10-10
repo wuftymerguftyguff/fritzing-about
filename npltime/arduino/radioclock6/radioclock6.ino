@@ -1,3 +1,5 @@
+
+#include <MemoryFree.h>
 #include <D1088BRG.h>
 #include <stdio.h>
 #define wwvbPin 2
@@ -16,11 +18,11 @@
 
 
 //Pin connected to Pin 12 of 74HC595 (Latch)
-int latchPin = 9;
+uint8_t latchPin = 9;
 //Pin connected to Pin 11 of 74HC595 (Clock)
-int clockPin = 10;
+uint8_t clockPin = 10;
 //Pin connected to Pin 14 of 74HC595 (Data)
-int dataPin = 11;
+uint8_t dataPin = 11;
 
 D1088BRG D1088BRG(latchPin,clockPin,dataPin);
 
@@ -31,9 +33,9 @@ D1088BRG D1088BRG(latchPin,clockPin,dataPin);
 
 //structure
 struct timeElement {
-  int buffer;
-  int offset;
-  int numBytes;  
+  uint8_t buffer;
+  uint8_t offset;
+  uint8_t numBytes;  
 };
 
 #define NPLMINUTEMARKERBITPATTERN 126
@@ -60,14 +62,14 @@ struct timeElement {
 
 
 //starting offset inside per second "byte"
-volatile int startingOffset = 0;
+volatile uint8_t startingOffset = 0;
 
 // starting state of the LED
-volatile int ledState = LOW;
+volatile uint8_t ledState = LOW;
 
 // time of this pulse state change
-long thisPulseChange = 0;
-long lastPulseChange = 0;
+unsigned long thisPulseChange = 0;
+unsigned long lastPulseChange = 0;
 
 // an array to store the bits in the current second
 // in msf each second is cplit into 10 100ms "bits"
@@ -81,23 +83,17 @@ byte savedaBuffer[8]; // saved copies of the above buffers
 byte savedbBuffer[8];
 
 // the pulse (second) offset in this minute
-int secondOffset = 0;
+uint8_t secondOffset = 0;
 
 
 // a boolean to show if we are at the top of the minute
 bool TOM = false;
 bool TOS = false;
 
-// how long we aim to pause the main loop (ms)
-long plannedDelay = 25;
-
 // hw long it takes to go around the main loop (we assume perfect timing as a starting point
 long mainElapsed = 0;
 
-// how long we need to delay to get the planned delay in reality
-long actualDelay = plannedDelay;
-
-long pulseStart,pulseEnd,pulseTimeLow,pulseTimeHigh,seconds = 0;
+long pulseStart,pulseEnd,pulseTimeLow,pulseTimeHigh = 0;
 
 long pulseWidth;
 long lastPulseWidth;
@@ -129,11 +125,11 @@ bool isParityValid(struct timeElement element,struct timeElement checkdigit) {
   uint16_t bits = GetChunk(element.offset,element.numBytes,element.buffer);
   bool calculatedParity=parity(bits);
   byte checkdigitbit = GetChunk(checkdigit.offset,checkdigit.numBytes,checkdigit.buffer); 
-  Serial.print("Bits : ");
+  Serial.print(F("Bits : "));
   Serial.println(bits);
-  Serial.print("Calculated Parity : ");
+  Serial.print(F("Calculated Parity : "));
   Serial.println(calculatedParity);
-  Serial.print("Parity : ");
+  Serial.print(F("Parity : "));
   Serial.println(checkdigitbit);
 }
 
@@ -186,7 +182,7 @@ void risingPulse() {
   pulseChange();
   
 #ifdef DEBUG  
-  Serial.print("RISING ");
+  Serial.print(F("RISING "));
   Serial.print("HIGH: ");
   Serial.print(pulseWidth);
   Serial.print(" ");
@@ -288,6 +284,8 @@ uint8_t nmeaChecksum(char arr[]) {
 }
 
 void printTime() {
+  Serial.print("freeMemory()=");
+  Serial.println(freeMemory());
   char buffer [DISPLAYLENGTH];
   int nplHour = getTimeVal(NPLHOUR) - 1;
   int nplMinute = getTimeVal(NPLMINUTE);
@@ -434,15 +432,13 @@ void fillBuffers(bool A,bool B) {
 void setup() {
 
 D1088BRG.initialize();
-char msg[] = " Hello Message ";
-D1088BRG.writeToDisplay(msg,sizeof(msg));  
 
 // this looks reversed as the module reversed the serial output of the carrier state
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
 
 Serial.begin(9600);           // set up Serial library at 19200 bps
-Serial.println("Clock Starting");  // Say something to show we have restarted.
+Serial.println(F("Clock Starting"));  // Say something to show we have restarted.
 pinMode(ledPin, OUTPUT); // set up the ledpin
 // set all the values of the current second to 1
 
