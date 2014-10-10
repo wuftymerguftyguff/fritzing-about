@@ -47,6 +47,15 @@ struct timeElement {
 
 #define NPLMINUTEMARKER (struct timeElement){A_BUFFER,52,8}
 
+#define NPLYEARCHECKDIGIT (struct timeElement){A_BUFFER,54,1}
+#define NPLDAYCHECKDIGIT (struct timeElement){A_BUFFER,55,1}
+#define NPLDOWCHECKDIGIT (struct timeElement){A_BUFFER,56,1}
+#define NPLTIMECHECKDIGIT (struct timeElement){A_BUFFER,57,1}
+
+#define NPLYEARBITS (struct timeElement){A_BUFFER,17,8}
+#define NPLDAYBITS (struct timeElement){A_BUFFER,25,11}
+#define NPLDOWBITS (struct timeElement){A_BUFFER,36,3}
+#define NPLTIMEBITS (struct timeElement){A_BUFFER,39,13}
 
 
 
@@ -105,6 +114,28 @@ int pulseTime = 0;
 
 long startTimeHigh = 0;
 long startTimeLow = 0;
+
+bool parity(uint16_t v) {
+  bool parity = false;  // parity will be the parity of v
+  while (v)
+  {
+    parity = !parity;
+    v = v & (v - 1);
+  }
+}
+
+
+bool isParityValid(struct timeElement element,struct timeElement checkdigit) {
+  uint16_t bits = GetChunk(element.offset,element.numBytes,element.buffer);
+  bool calculatedParity=parity(bits);
+  byte checkdigitbit = GetChunk(checkdigit.offset,checkdigit.numBytes,checkdigit.buffer); 
+  Serial.print("Bits : ");
+  Serial.println(bits);
+  Serial.print("Calculated Parity : ");
+  Serial.println(calculatedParity);
+  Serial.print("Parity : ");
+  Serial.println(checkdigitbit);
+}
 
 void setBits(int width,int level) {
   
@@ -200,6 +231,19 @@ void fallingPulse() {
     
 
     if ( GetChunk(secondOffset - 8,8,A_BUFFER) == NPLMINUTEMARKERBITPATTERN ) {
+      
+/*      
+#define NPLYEARCHECKDIGIT (struct timeElement){A_BUFFER,54,1}
+#define NPLDAYCHECKDIGIT (struct timeElement){A_BUFFER,55,1}
+#define NPLDOWCHECKDIGIT (struct timeElement){A_BUFFER,56,1}
+#define NPLTIMECHECKDIGIT (struct timeElement){A_BUFFER,57,1}
+
+#define NPLYEARBITS (struct timeElement){A_BUFFER,17,8}
+#define NPLDAYBITS (struct timeElement){A_BUFFER,25,11}
+#define NPLDOWBITS (struct timeElement){A_BUFFER,36,3}
+#define NPLTIMEBITS (struct timeElement){A_BUFFER,39,13}
+*/
+      isParityValid(NPLYEARBITS,NPLYEARCHECKDIGIT);
       saveBuffers(); 
       clearBuffers();
       secondOffset = 0;
@@ -310,11 +354,11 @@ byte bcdToDec(byte val)			// Convert binary coded decimal to normal decimal numb
   return ( (val/16*10) + (val%16) );
 }
 
-byte GetChunk(int start, int numBits, int buffer)  {
+uint16_t GetChunk(int start, int numBits, int buffer)  {
 // return the byte 'chunk' containing the number of bits read at the starting
 // bit position in the raw buffer upto 8 bits. returns a byte
 
-  byte chunk = 0;
+  uint16_t chunk = 0;
   byte bitVal = 0;
   int counter = numBits - 1;
   int bitCounter = 0;				// a count of the number of "1" bits
@@ -343,6 +387,11 @@ byte GetChunk(int start, int numBits, int buffer)  {
 void clearBuffers() {
   memset(&aBuffer[0], 0x00, sizeof(aBuffer));
   memset(&bBuffer[0], 0x00, sizeof(bBuffer));
+}
+
+void clearSavedBuffers() {
+  memset(&savedaBuffer[0], 0x00, sizeof(savedaBuffer));
+  memset(&savedbBuffer[0], 0x00, sizeof(savedbBuffer));
 }
 
 void saveBuffers() {
@@ -400,6 +449,7 @@ pinMode(ledPin, OUTPUT); // set up the ledpin
 // as msf signal is on by default and is turned off to "send data"
 memset(&second[0], 0x00, sizeof(second));
 clearBuffers();
+clearSavedBuffers();
 }
 
 void loop() {
