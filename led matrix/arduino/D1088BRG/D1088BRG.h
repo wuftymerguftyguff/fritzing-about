@@ -13,7 +13,7 @@
 
 
 
-#define DISPLAYLENGTH 21
+#define DISPLAYLENGTH 65
 
 //class TimerOne;
 
