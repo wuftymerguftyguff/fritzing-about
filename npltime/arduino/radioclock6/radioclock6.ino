@@ -14,6 +14,8 @@
 
 #define CURRENTCENTURY 20
 
+
+
 //#define DEBUG 1
 
 
@@ -24,7 +26,7 @@ uint8_t clockPin = 10;
 //Pin connected to Pin 14 of 74HC595 (Data)
 uint8_t dataPin = 11;
 
-D1088BRG D1088BRG(latchPin,clockPin,dataPin);
+//D1088BRG D1088BRG(latchPin,clockPin,dataPin);
 
 //#define NPLYEAR 0
 
@@ -57,7 +59,7 @@ struct timeElement {
 #define NPLYEARBITS (struct timeElement){A_BUFFER,17,8}
 #define NPLDAYBITS (struct timeElement){A_BUFFER,25,11}
 #define NPLDOWBITS (struct timeElement){A_BUFFER,36,3}
-#define NPLTIMEBITS (struct timeElement){A_BUFFER,39,13}
+#define NPLTIMEBITS (struct timeElement){A_BUFFER,39,12}
 
 
 
@@ -87,56 +89,54 @@ uint8_t secondOffset = 0;
 
 
 // a boolean to show if we are at the top of the minute
-bool TOM = false;
-bool TOS = false;
+volatile bool TOM = false;
+volatile bool TOS = false;
 
-// hw long it takes to go around the main loop (we assume perfect timing as a starting point
-long mainElapsed = 0;
-
-long pulseStart,pulseEnd,pulseTimeLow,pulseTimeHigh = 0;
+//long pulseTimeLow,pulseTimeHigh = 0;
 
 long pulseWidth;
 long lastPulseWidth;
 
 boolean pulseStatus = false;
 boolean childPulse = false;
-long lastPulse = 0;
-int sigWas = LOW;
-int carrierState;
-
-int secondMillis;
 
 int pulseTime = 0;
 
 long startTimeHigh = 0;
 long startTimeLow = 0;
 
-bool parity(uint16_t v) {
-  bool parity = false;  // parity will be the parity of v
-  while (v)
-  {
-    parity = !parity;
-    v = v & (v - 1);
-  }
+int oddParity(unsigned x) {
+   unsigned y;
+   y = x ^ (x >> 1);
+   y = y ^ (y >> 2);
+   y = y ^ (y >> 4);
+   y = y ^ (y >> 8);
+   y = y ^ (y >>16);
+   return ~y & 1;
 }
 
 
 bool isParityValid(struct timeElement element,struct timeElement checkdigit) {
   uint16_t bits = GetChunk(element.offset,element.numBytes,element.buffer);
-  bool calculatedParity=parity(bits);
-  byte checkdigitbit = GetChunk(checkdigit.offset,checkdigit.numBytes,checkdigit.buffer); 
+  bool calculatedParity=oddParity(bits);
+  uint16_t checkdigitbit = GetChunk(checkdigit.offset,checkdigit.numBytes,checkdigit.buffer); 
   Serial.print(F("Bits : "));
-  Serial.println(bits);
-  Serial.print(F("Calculated Parity : "));
-  Serial.println(calculatedParity);
-  Serial.print(F("Parity : "));
+  Serial.print(bits);
+  Serial.print(F(" Calculated Parity : "));
+  Serial.print(calculatedParity);
+  Serial.print(F(" Parity : "));
   Serial.println(checkdigitbit);
+  if ( calculatedParity == checkdigitbit ) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
-void setBits(int width,int level) {
+void setBits(int width,uint8_t level) {
   
-  int numBitsToSet = max(width/100,1);  // Each "bit" is 100ms, but we have to set at least one (one bit pulses are oten reported as < 100 ms !!
-  int bitOffset = startingOffset;       // Which bit should we set next?
+  uint8_t numBitsToSet = max(width/100,1);  // Each "bit" is 100ms, but we have to set at least one (one bit pulses are oten reported as < 100 ms !!
+  uint8_t bitOffset = startingOffset;       // Which bit should we set next?
   startingOffset += numBitsToSet;       // what bit should we start with the next time we are called?
   
   if ( level == LOW ) return;  //return immediately for low bits as these are defaulted to 1 anyway
@@ -217,47 +217,35 @@ void fallingPulse() {
     secondOffset++;
     startingOffset = 0;
   }
-/*  
-  if ( getTimeByte(NPLMINUTEMARKER) == NPLMINUTEMARKERBITPATTERN ) {
-      Serial.println("1st they match");
-      Serial.print("\nTOM *************\n");
-      secondOffset = 0;
-   }
-*/
+
     
 
     if ( GetChunk(secondOffset - 8,8,A_BUFFER) == NPLMINUTEMARKERBITPATTERN ) {
+      TOM = true;
+                 //    isParityValid(NPLYEARBITS,NPLYEARCHECKDIGIT);
+ //     isParityValid(NPLDAYBITS,NPLDAYCHECKDIGIT);
+ //       isParityValid(NPLDOWBITS,NPLDOWCHECKDIGIT) ;
+ isParityValid(NPLTIMEBITS,NPLTIMECHECKDIGIT) ;
       
-/*      
-#define NPLYEARCHECKDIGIT (struct timeElement){A_BUFFER,54,1}
-#define NPLDAYCHECKDIGIT (struct timeElement){A_BUFFER,55,1}
-#define NPLDOWCHECKDIGIT (struct timeElement){A_BUFFER,56,1}
-#define NPLTIMECHECKDIGIT (struct timeElement){A_BUFFER,57,1}
-
-#define NPLYEARBITS (struct timeElement){A_BUFFER,17,8}
-#define NPLDAYBITS (struct timeElement){A_BUFFER,25,11}
-#define NPLDOWBITS (struct timeElement){A_BUFFER,36,3}
-#define NPLTIMEBITS (struct timeElement){A_BUFFER,39,13}
-*/
-      isParityValid(NPLYEARBITS,NPLYEARCHECKDIGIT);
-      saveBuffers(); 
-      clearBuffers();
-      secondOffset = 0;
-  } 
+         
+        saveBuffers(); 
+        secondOffset = 0;
+        clearBuffers();     
+    } 
 
 
 }
 
 void printBufferBits() {
 
-  for (int i=0;i<=secondOffset;i++) {
-    int bufferElement=i / 8;
-    int bufferElementOffset = i % 8 ^ 0x07 ;
+  for (uint8_t i=0;i<=secondOffset;i++) {
+    uint8_t bufferElement=i / 8;
+    uint8_t bufferElementOffset = i % 8 ^ 0x07 ;
     Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));  
     //Serial.print(bitRead(bBuffer[bufferElement],bufferElementOffset)); 
     }
     
-  Serial.print("\n");
+  Serial.print(F("\n"));
   // bcd messing
  // Serial.print("                 ");
   /*
@@ -284,13 +272,13 @@ uint8_t nmeaChecksum(char arr[]) {
 }
 
 void printTime() {
-  Serial.print("freeMemory()=");
+  Serial.print(F("freeMemory()="));
   Serial.println(freeMemory());
   char buffer [DISPLAYLENGTH];
-  int nplHour = getTimeVal(NPLHOUR) - 1;
-  int nplMinute = getTimeVal(NPLMINUTE);
-  int nplDay = getTimeVal(NPLDAY);
-  int nplMonth = getTimeVal(NPLMONTH);
+  uint8_t nplHour = getTimeVal(NPLHOUR) - 1;
+  uint8_t nplMinute = getTimeVal(NPLMINUTE);
+  uint8_t nplDay = getTimeVal(NPLDAY);
+  uint8_t nplMonth = getTimeVal(NPLMONTH);
   int nplYear = getTimeVal(NPLYEAR);
   // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
   /*
@@ -304,6 +292,7 @@ void printTime() {
  */
 
    // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
+
   sprintf(buffer, "$GPZDA,%02d%02d%02d.00,%02d,%02d,20%02d,+1,00*",
                        nplHour,
                        nplMinute,
@@ -329,7 +318,7 @@ void printTime() {
                      
  
   //Serial.println(nmeaChecksum(buffer));
-  D1088BRG.writeToDisplay(buffer,sizeof(buffer));
+ // D1088BRG.writeToDisplay(buffer,sizeof(buffer));
 
   
 }
@@ -338,9 +327,6 @@ int getTimeVal(struct timeElement element) {
     return bcdToDec(GetChunk(element.offset,element.numBytes,element.buffer));  
 }
 
-byte getTimeByte(struct timeElement element) {
-  return GetChunk(element.offset,element.numBytes,element.buffer);
-}
 
 byte decToBcd(byte val)			// Convert normal decimal numbers to binary coded decimal
 {
@@ -358,8 +344,8 @@ uint16_t GetChunk(int start, int numBits, int buffer)  {
 
   uint16_t chunk = 0;
   byte bitVal = 0;
-  int counter = numBits - 1;
-  int bitCounter = 0;				// a count of the number of "1" bits
+  uint8_t counter = numBits - 1;
+  uint8_t bitCounter = 0;				// a count of the number of "1" bits
 
   for(int i = start;i < start + numBits;i++)					// loop for numBits
 	{
@@ -431,13 +417,13 @@ void fillBuffers(bool A,bool B) {
   
 void setup() {
 
-D1088BRG.initialize();
+//D1088BRG.initialize();
 
 // this looks reversed as the module reversed the serial output of the carrier state
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
 
-Serial.begin(9600);           // set up Serial library at 19200 bps
+Serial.begin(115200);           // set up Serial library at 19200 bps
 Serial.println(F("Clock Starting"));  // Say something to show we have restarted.
 pinMode(ledPin, OUTPUT); // set up the ledpin
 // set all the values of the current second to 1
@@ -481,9 +467,8 @@ void loop() {
     
     
     
-    if ( TOM == true ) {
-        printTime();
-       
+    if ( TOM  ) {             
+  
         TOM = false;   
      }
     
@@ -491,6 +476,6 @@ void loop() {
   }
   
  
-D1088BRG.update(); 
+//D1088BRG.update(); 
 }
 
