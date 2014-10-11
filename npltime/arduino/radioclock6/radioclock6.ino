@@ -59,7 +59,7 @@ struct timeElement {
 #define NPLYEARBITS (struct timeElement){A_BUFFER,17,8}
 #define NPLDAYBITS (struct timeElement){A_BUFFER,25,11}
 #define NPLDOWBITS (struct timeElement){A_BUFFER,36,3}
-#define NPLTIMEBITS (struct timeElement){A_BUFFER,39,12}
+#define NPLTIMEBITS (struct timeElement){A_BUFFER,39,13}
 
 
 
@@ -120,12 +120,14 @@ bool isParityValid(struct timeElement element,struct timeElement checkdigit) {
   uint16_t bits = GetChunk(element.offset,element.numBytes,element.buffer);
   bool calculatedParity=oddParity(bits);
   uint16_t checkdigitbit = GetChunk(checkdigit.offset,checkdigit.numBytes,checkdigit.buffer); 
+  /*
   Serial.print(F("Bits : "));
   Serial.print(bits);
   Serial.print(F(" Calculated Parity : "));
   Serial.print(calculatedParity);
   Serial.print(F(" Parity : "));
   Serial.println(checkdigitbit);
+  */
   if ( calculatedParity == checkdigitbit ) {
     return true;
   } else {
@@ -222,10 +224,11 @@ void fallingPulse() {
 
     if ( GetChunk(secondOffset - 8,8,A_BUFFER) == NPLMINUTEMARKERBITPATTERN ) {
       TOM = true;
-                 //    isParityValid(NPLYEARBITS,NPLYEARCHECKDIGIT);
- //     isParityValid(NPLDAYBITS,NPLDAYCHECKDIGIT);
- //       isParityValid(NPLDOWBITS,NPLDOWCHECKDIGIT) ;
- isParityValid(NPLTIMEBITS,NPLTIMECHECKDIGIT) ;
+      if ( isParityValid(NPLYEARBITS,NPLYEARCHECKDIGIT)
+            && isParityValid(NPLDAYBITS,NPLDAYCHECKDIGIT)
+            && isParityValid(NPLDOWBITS,NPLDOWCHECKDIGIT) 
+            && isParityValid(NPLTIMEBITS,NPLTIMECHECKDIGIT)
+         ) Serial.println("bad parity");
       
          
         saveBuffers(); 
@@ -272,8 +275,8 @@ uint8_t nmeaChecksum(char arr[]) {
 }
 
 void printTime() {
-  Serial.print(F("freeMemory()="));
-  Serial.println(freeMemory());
+  //Serial.print(F("freeMemory()="));
+  //Serial.println(freeMemory());
   char buffer [DISPLAYLENGTH];
   uint8_t nplHour = getTimeVal(NPLHOUR) - 1;
   uint8_t nplMinute = getTimeVal(NPLMINUTE);
