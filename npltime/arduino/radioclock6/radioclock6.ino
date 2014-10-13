@@ -1,6 +1,6 @@
 
 #include <MemoryFree.h>
-#include <D1088BRG.h>
+//#include <D1088BRG.h>
 #include <stdio.h>
 #define wwvbPin 2
 #define ledPin 13
@@ -35,9 +35,9 @@ uint8_t dataPin = 11;
 
 //structure
 struct timeElement {
-  uint8_t buffer;
-  uint8_t offset;
-  uint8_t numBytes;  
+  byte buffer;
+  byte offset;
+  byte numBytes;  
 };
 
 #define NPLMINUTEMARKERBITPATTERN 126
@@ -78,14 +78,14 @@ unsigned long lastPulseChange = 0;
 
 bool second[10];
 
-byte aBuffer[8];// buffer for 'A' bits
-byte bBuffer[8];// buffer for 'B' bits
+volatile byte aBuffer[8];// buffer for 'A' bits
+volatile byte bBuffer[8];// buffer for 'B' bits
 
 byte savedaBuffer[8]; // saved copies of the above buffers
 byte savedbBuffer[8];
 
 // the pulse (second) offset in this minute
-uint8_t secondOffset = 0;
+volatile uint8_t secondOffset = 0;
 
 
 // a boolean to show if we are at the top of the minute
@@ -97,43 +97,47 @@ volatile bool TOS = false;
 long pulseWidth;
 long lastPulseWidth;
 
-boolean pulseStatus = false;
-boolean childPulse = false;
-
 int pulseTime = 0;
 
 long startTimeHigh = 0;
 long startTimeLow = 0;
 
-int oddParity(unsigned x) {
-   unsigned y;
-   y = x ^ (x >> 1);
-   y = y ^ (y >> 2);
-   y = y ^ (y >> 4);
-   y = y ^ (y >> 8);
-   y = y ^ (y >>16);
-   return ~y & 1;
+uint16_t anotherLevel(int start, int numBits, int buffer) {
+  uint16_t one;
+  uint16_t two;
+  uint16_t three;
+  uint16_t fout;
+  return 1;
 }
 
+int isParityValid(struct timeElement element,struct timeElement checkdigit) {
+  uint16_t whatthebloodyhell = GetChunk(element.offset,element.numBytes,element.buffer);
+  //uint16_t whatthebloodyhell = 13579;
+  uint16_t dobbin = anotherLevel(element.offset,element.numBytes,element.buffer);
+  //oddParity(bits);
+  return 1;
+}
 
+/*
 bool isParityValid(struct timeElement element,struct timeElement checkdigit) {
   uint16_t bits = GetChunk(element.offset,element.numBytes,element.buffer);
   bool calculatedParity=oddParity(bits);
   uint16_t checkdigitbit = GetChunk(checkdigit.offset,checkdigit.numBytes,checkdigit.buffer); 
-  /*
+
   Serial.print(F("Bits : "));
   Serial.print(bits);
   Serial.print(F(" Calculated Parity : "));
   Serial.print(calculatedParity);
   Serial.print(F(" Parity : "));
-  Serial.println(checkdigitbit);
-  */
+  Serial.print(checkdigitbit);
+
   if ( calculatedParity == checkdigitbit ) {
-    return true;
-  } else {
     return false;
+  } else {
+    return true;
   }
 }
+*/
 
 void setBits(int width,uint8_t level) {
   
@@ -173,9 +177,6 @@ void pulseChange() {
   
   //toggle the state of the led
   ledState = !ledState;
-  
-  // set the LED with the ledState of the variable:
-  digitalWrite(ledPin, ledState);
 }
 
 void risingPulse() {
@@ -224,6 +225,7 @@ void fallingPulse() {
 
     if ( GetChunk(secondOffset - 8,8,A_BUFFER) == NPLMINUTEMARKERBITPATTERN ) {
       TOM = true;
+      /*
       if ( isParityValid(NPLYEARBITS,NPLYEARCHECKDIGIT)
             && isParityValid(NPLDAYBITS,NPLDAYCHECKDIGIT)
             && isParityValid(NPLDOWBITS,NPLDOWCHECKDIGIT) 
@@ -233,7 +235,8 @@ void fallingPulse() {
          
         saveBuffers(); 
         secondOffset = 0;
-        clearBuffers();     
+        clearBuffers(); 
+    */    
     } 
 
 
@@ -277,14 +280,14 @@ uint8_t nmeaChecksum(char arr[]) {
 void printTime() {
   //Serial.print(F("freeMemory()="));
   //Serial.println(freeMemory());
-  char buffer [DISPLAYLENGTH];
+  char buffer [65];
   uint8_t nplHour = getTimeVal(NPLHOUR) - 1;
   uint8_t nplMinute = getTimeVal(NPLMINUTE);
   uint8_t nplDay = getTimeVal(NPLDAY);
   uint8_t nplMonth = getTimeVal(NPLMONTH);
   int nplYear = getTimeVal(NPLYEAR);
   // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
-  /*
+  
   sprintf(buffer, " %02d/%02d/20%02d %02d:%02d:%02d ", getTimeVal(NPLDAY),
                                       getTimeVal(NPLMONTH),
                                       getTimeVal(NPLYEAR),
@@ -292,7 +295,8 @@ void printTime() {
                                       getTimeVal(NPLMINUTE),
                                       secondOffset                            
   );
- */
+ // Serial.println(buffer);
+  
 
    // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
 
@@ -322,7 +326,7 @@ void printTime() {
  
   //Serial.println(nmeaChecksum(buffer));
  // D1088BRG.writeToDisplay(buffer,sizeof(buffer));
-
+ Serial.flush();
   
 }
 
@@ -372,8 +376,8 @@ uint16_t GetChunk(int start, int numBits, int buffer)  {
 }
 
 void clearBuffers() {
-  memset(&aBuffer[0], 0x00, sizeof(aBuffer));
-  memset(&bBuffer[0], 0x00, sizeof(bBuffer));
+  memset((byte*)&aBuffer[0], 0xFF, sizeof(aBuffer));
+  memset((byte*)&bBuffer[0], 0xFF, sizeof(bBuffer));
 }
 
 void clearSavedBuffers() {
@@ -382,8 +386,8 @@ void clearSavedBuffers() {
 }
 
 void saveBuffers() {
-  memcpy(&savedaBuffer[0],&aBuffer[0],sizeof(aBuffer));
-  memcpy(&savedbBuffer[0],&bBuffer[0],sizeof(bBuffer));
+  memcpy(&savedaBuffer[0],(byte*)&aBuffer[0],sizeof(aBuffer));
+  memcpy(&savedbBuffer[0],(byte*)&bBuffer[0],sizeof(bBuffer));
 }
 
 void fillBuffers(bool A,bool B) {
@@ -438,6 +442,10 @@ clearSavedBuffers();
 }
 
 void loop() {
+  
+  // set the LED with the ledState of the variable:
+  digitalWrite(ledPin, ledState);
+  
   if ( TOS == true ) {
  
 #ifdef DEBUG
@@ -465,17 +473,21 @@ void loop() {
 #ifdef DEBUG
     Serial.print("TOS "); 
 #endif 
-    printTime();
+    
     TOS = false;
     
     
     
-    if ( TOM  ) {             
-  
+    if ( TOM ) {
+        Serial.println("TOM");
+        //int poopy = isParityValid(NPLYEARBITS,NPLYEARCHECKDIGIT);      
+        saveBuffers();
+        secondOffset = 0;
+        clearBuffers();   
         TOM = false;   
      }
     
-   
+   printTime();
   }
   
  
