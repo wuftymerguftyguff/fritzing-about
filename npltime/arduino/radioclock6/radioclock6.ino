@@ -494,7 +494,7 @@ void loop() {
         Serial.println("TOM");
         
         uint16_t xyear = isParityValid(NPLYEARPARITY);
-        uint16_t  xday = isParityValid(NPLDAYPARITY);
+        //uint16_t  xday = isParityValid(NPLDAYPARITY);
         /*
         delay(50);   
         uint16_t  xdow = isParityValid(NPLDOWPARITY); 
@@ -507,7 +507,7 @@ void loop() {
         clearBuffers();   
         TOM = false;   
      }
-    
+   check_mem(); 
    printTime();
   }
   
