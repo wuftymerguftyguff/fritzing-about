@@ -1,5 +1,5 @@
 
-#include <MemoryFree.h>
+//#include <MemoryFree.h>
 //#include <D1088BRG.h>
 #include <stdio.h>
 #define wwvbPin 2
@@ -12,8 +12,9 @@
 #define SAVED_A_BUFFER 2
 #define SAVED_B_BUFFER 3
 
-#define CURRENTCENTURY 20
+const byte CURRENTCENTURY=20;
 
+/*
 uint8_t * heapptr, * stackptr;
 
 void check_mem() {
@@ -22,17 +23,18 @@ void check_mem() {
   free(stackptr);      // free up the memory again (sets stackptr to 0)
   stackptr =  (uint8_t *)(SP);           // save value of stack pointer
 }
+*/
 
 
 //#define DEBUG 1
 
 
 //Pin connected to Pin 12 of 74HC595 (Latch)
-uint8_t latchPin = 9;
+const uint8_t latchPin = 9;
 //Pin connected to Pin 11 of 74HC595 (Clock)
-uint8_t clockPin = 10;
+const uint8_t clockPin = 10;
 //Pin connected to Pin 14 of 74HC595 (Data)
-uint8_t dataPin = 11;
+const uint8_t dataPin = 11;
 
 //D1088BRG D1088BRG(latchPin,clockPin,dataPin);
 
@@ -50,21 +52,21 @@ struct timeElement {
   byte parityBit;  
 };
 
-#define NPLMINUTEMARKERBITPATTERN 126
+const byte NPLMINUTEMARKERBITPATTERN = 126;
 
-#define NPLYEAR (struct timeElement){SAVED_A_BUFFER,17,8}
-#define NPLMONTH (struct timeElement){SAVED_A_BUFFER,25,5}
-#define NPLDAY (struct timeElement){SAVED_A_BUFFER,30,6}
-#define NPLWEEKDAY (struct timeElement){SAVED_A_BUFFER,36,3}
-#define NPLHOUR (struct timeElement){SAVED_A_BUFFER,39,6}
-#define NPLMINUTE (struct timeElement){SAVED_A_BUFFER,45,7}
+const timeElement NPLYEAR = {SAVED_A_BUFFER,17,8};
+const timeElement NPLMONTH = {SAVED_A_BUFFER,25,5};
+const timeElement NPLDAY = {SAVED_A_BUFFER,30,6};
+const timeElement NPLWEEKDAY = {SAVED_A_BUFFER,36,3};
+const timeElement NPLHOUR = {SAVED_A_BUFFER,39,6};
+const timeElement NPLMINUTE = {SAVED_A_BUFFER,45,7};
 
-#define NPLMINUTEMARKER (struct timeElement){A_BUFFER,52,8}
+const timeElement NPLMINUTEMARKER = {A_BUFFER,52,8};
 
-#define NPLYEARPARITY (struct timeElement){A_BUFFER,17,8,8,54}
-#define NPLDAYPARITY (struct timeElement){A_BUFFER,25,11,11,55}
-#define NPLDOWPARITY (struct timeElement){A_BUFFER,36,3,3,56}
-#define NPLTIMEPARITY (struct timeElement){A_BUFFER,39,13,13,57}
+const timeElement NPLYEARPARITY = {A_BUFFER,17,8,8,54};
+const timeElement NPLDAYPARITY = {A_BUFFER,25,11,11,55};
+const timeElement NPLDOWPARITY = {A_BUFFER,36,3,3,56};
+const timeElement NPLTIMEPARITY = {A_BUFFER,39,13,13,57};
 
 
 
@@ -117,10 +119,29 @@ struct timeElement {
 };
 */
 
+unsigned int oddParity(uint16_t x) {
+   uint16_t y;
+   y = x ^ (x >> 1);
+   y = y ^ (y >> 2);
+   y = y ^ (y >> 4);
+   y = y ^ (y >> 8);
+   y = y ^ (y >>16);
+   y = ~y & 1;
+   return y;
+   
+}
+
 uint16_t isParityValid(struct timeElement element) {
-  check_mem();
+  //check_mem();
   uint16_t timedata = GetChunk(element.offset,element.parityNumBytes,element.buffer);
-  //Serial.println(timedata);
+  byte sentParity = GetChunk(element.parityBit,1,element.buffer);
+  unsigned int calcParity = oddParity(timedata);
+  Serial.print(timedata);
+  Serial.print("\t");
+  Serial.print(calcParity);
+  Serial.print("\t");
+  Serial.print(sentParity);
+  Serial.print("\n");
   //Serial.flush();
   //uint16_t whatthebloodyhell = 13579;
   //oddParity(bits);
@@ -288,11 +309,11 @@ uint8_t nmeaChecksum(char arr[]) {
 
 void printTime() {
   //heapptr, * stackptr;
-  Serial.println(*heapptr);
-  Serial.println(*stackptr);
+  //Serial.println(*heapptr);
+  //Serial.println(*stackptr);
   //Serial.print(F("freeMemory()="));
   //Serial.println(freeMemory());
-  char buffer [65];
+  char buffer[65];
   uint8_t nplHour = getTimeVal(NPLHOUR) - 1;
   uint8_t nplMinute = getTimeVal(NPLMINUTE);
   uint8_t nplDay = getTimeVal(NPLDAY);
@@ -388,8 +409,8 @@ uint16_t GetChunk(int start, int numBits, int buffer)  {
 }
 
 void clearBuffers() {
-  memset((byte*)&aBuffer[0], 0xFF, sizeof(aBuffer));
-  memset((byte*)&bBuffer[0], 0xFF, sizeof(bBuffer));
+  memset((byte*)&aBuffer[0], 0x00, sizeof(aBuffer));
+  memset((byte*)&bBuffer[0], 0x00, sizeof(bBuffer));
 }
 
 void clearSavedBuffers() {
@@ -442,7 +463,7 @@ void setup() {
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
 
-Serial.begin(9600);           // set up Serial library at 19200 bps
+Serial.begin(115200);           // set up Serial library at 19200 bps
 Serial.println(F("Clock Starting"));  // Say something to show we have restarted.
 pinMode(ledPin, OUTPUT); // set up the ledpin
 // set all the values of the current second to 1
@@ -493,21 +514,16 @@ void loop() {
     if ( TOM ) {
         Serial.println("TOM");
         
-        uint16_t xyear = isParityValid(NPLYEARPARITY);
-        //uint16_t  xday = isParityValid(NPLDAYPARITY);
-        /*
-        delay(50);   
+        uint16_t  xyear = isParityValid(NPLYEARPARITY);
+        uint16_t  xday = isParityValid(NPLDAYPARITY); 
         uint16_t  xdow = isParityValid(NPLDOWPARITY); 
-        delay(50); 
         uint16_t  xtime = isParityValid(NPLTIMEPARITY);
-         delay(50);
-        */    
         saveBuffers();
         secondOffset = 0;
         clearBuffers();   
         TOM = false;   
      }
-   check_mem(); 
+   //check_mem(); 
    printTime();
   }
   
