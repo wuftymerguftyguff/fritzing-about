@@ -14,6 +14,14 @@
 
 #define CURRENTCENTURY 20
 
+uint8_t * heapptr, * stackptr;
+
+void check_mem() {
+  stackptr = (uint8_t *)malloc(4);          // use stackptr temporarily
+  heapptr = stackptr;                     // save value of heap pointer
+  free(stackptr);      // free up the memory again (sets stackptr to 0)
+  stackptr =  (uint8_t *)(SP);           // save value of stack pointer
+}
 
 
 //#define DEBUG 1
@@ -37,7 +45,9 @@ uint8_t dataPin = 11;
 struct timeElement {
   byte buffer;
   byte offset;
-  byte numBytes;  
+  byte numBytes;
+  byte parityNumBytes;
+  byte parityBit;  
 };
 
 #define NPLMINUTEMARKERBITPATTERN 126
@@ -51,15 +61,10 @@ struct timeElement {
 
 #define NPLMINUTEMARKER (struct timeElement){A_BUFFER,52,8}
 
-#define NPLYEARCHECKDIGIT (struct timeElement){A_BUFFER,54,1}
-#define NPLDAYCHECKDIGIT (struct timeElement){A_BUFFER,55,1}
-#define NPLDOWCHECKDIGIT (struct timeElement){A_BUFFER,56,1}
-#define NPLTIMECHECKDIGIT (struct timeElement){A_BUFFER,57,1}
-
-#define NPLYEARBITS (struct timeElement){A_BUFFER,17,8}
-#define NPLDAYBITS (struct timeElement){A_BUFFER,25,11}
-#define NPLDOWBITS (struct timeElement){A_BUFFER,36,3}
-#define NPLTIMEBITS (struct timeElement){A_BUFFER,39,13}
+#define NPLYEARPARITY (struct timeElement){A_BUFFER,17,8,8,54}
+#define NPLDAYPARITY (struct timeElement){A_BUFFER,25,11,11,55}
+#define NPLDOWPARITY (struct timeElement){A_BUFFER,36,3,3,56}
+#define NPLTIMEPARITY (struct timeElement){A_BUFFER,39,13,13,57}
 
 
 
@@ -102,20 +107,24 @@ int pulseTime = 0;
 long startTimeHigh = 0;
 long startTimeLow = 0;
 
-uint16_t anotherLevel(int start, int numBits, int buffer) {
-  uint16_t one;
-  uint16_t two;
-  uint16_t three;
-  uint16_t fout;
-  return 1;
-}
+/*structure
+struct timeElement {
+  byte buffer;
+  byte offset;
+  byte numBytes;
+  byte parityNumBytes;
+  byte parityBit;  
+};
+*/
 
-int isParityValid(struct timeElement element,struct timeElement checkdigit) {
-  uint16_t whatthebloodyhell = GetChunk(element.offset,element.numBytes,element.buffer);
+uint16_t isParityValid(struct timeElement element) {
+  check_mem();
+  uint16_t timedata = GetChunk(element.offset,element.parityNumBytes,element.buffer);
+  //Serial.println(timedata);
+  //Serial.flush();
   //uint16_t whatthebloodyhell = 13579;
-  uint16_t dobbin = anotherLevel(element.offset,element.numBytes,element.buffer);
   //oddParity(bits);
-  return 1;
+  return timedata;
 }
 
 /*
@@ -278,6 +287,9 @@ uint8_t nmeaChecksum(char arr[]) {
 }
 
 void printTime() {
+  //heapptr, * stackptr;
+  Serial.println(*heapptr);
+  Serial.println(*stackptr);
   //Serial.print(F("freeMemory()="));
   //Serial.println(freeMemory());
   char buffer [65];
@@ -430,7 +442,7 @@ void setup() {
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
 
-Serial.begin(115200);           // set up Serial library at 19200 bps
+Serial.begin(9600);           // set up Serial library at 19200 bps
 Serial.println(F("Clock Starting"));  // Say something to show we have restarted.
 pinMode(ledPin, OUTPUT); // set up the ledpin
 // set all the values of the current second to 1
@@ -480,7 +492,16 @@ void loop() {
     
     if ( TOM ) {
         Serial.println("TOM");
-        //int poopy = isParityValid(NPLYEARBITS,NPLYEARCHECKDIGIT);      
+        
+        uint16_t xyear = isParityValid(NPLYEARPARITY);
+        uint16_t  xday = isParityValid(NPLDAYPARITY);
+        /*
+        delay(50);   
+        uint16_t  xdow = isParityValid(NPLDOWPARITY); 
+        delay(50); 
+        uint16_t  xtime = isParityValid(NPLTIMEPARITY);
+         delay(50);
+        */    
         saveBuffers();
         secondOffset = 0;
         clearBuffers();   
@@ -493,4 +514,5 @@ void loop() {
  
 //D1088BRG.update(); 
 }
+
 
