@@ -500,11 +500,7 @@ void loop() {
     }
     Serial.print("\n");
     printBufferBits();
-#endif
- 
-    
-    
-    
+#endif   
         
 #ifdef DEBUG
     Serial.print("TOS "); 
@@ -515,12 +511,19 @@ void loop() {
     
     
     if ( TOM ) {
+#ifdef DEBUG
         Serial.println("TOM");
+#endif 
         
-        boolean  xyear = isParityValid(NPLYEARPARITY);
-        boolean  xday = isParityValid(NPLDAYPARITY); 
-        boolean  xdow = isParityValid(NPLDOWPARITY); 
-        boolean  xtime = isParityValid(NPLTIMEPARITY);
+        if (   isParityValid(NPLYEARPARITY)
+            && isParityValid(NPLDAYPARITY)
+            && isParityValid(NPLDOWPARITY)
+            && isParityValid(NPLTIMEPARITY) ) {
+              NMEA_NAVIGATION_WARNING = *GPS_LOCK;
+            } else {
+              NMEA_NAVIGATION_WARNING = *GPS_NO_LOCK;
+            }
+            
         saveBuffers();
         secondOffset = 0;
         clearBuffers();   
