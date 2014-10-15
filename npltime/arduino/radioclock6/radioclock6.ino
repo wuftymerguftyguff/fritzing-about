@@ -86,6 +86,12 @@ volatile uint8_t secondOffset = 0;
 volatile bool TOM = false;
 volatile bool TOS = false;
 
+// a boolean to show if we are happy we have an accurate time
+// this is passed on as a GPS "lock" in the nmea data
+#define GPS_LOCK "A"
+#define GPS_NO_LOCK "V"
+char NMEA_NAVIGATION_WARNING = *GPS_NO_LOCK;
+
 //long pulseTimeLow,pulseTimeHigh = 0;
 
 long pulseWidth;
@@ -341,10 +347,11 @@ void printTime() {
   
   //"$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*");
   //Serial.println("$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*");
-   sprintf(buffer, "$GPRMC,%02d%02d%02d,A,4916.45,N,12311.12,W,000.5,054.7,%02d%02d%02d,020.3,E*",
+   sprintf(buffer, "$GPRMC,%02d%02d%02d,%c,4916.45,N,12311.12,W,000.5,054.7,%02d%02d%02d,020.3,E*",
                      nplHour,
                      nplMinute,
                      secondOffset,
+                     NMEA_NAVIGATION_WARNING,
                      nplDay,
                      nplMonth,
                      nplYear);
@@ -494,7 +501,7 @@ void loop() {
     Serial.print("\n");
     printBufferBits();
 #endif
- printBufferBits();
+ 
     
     
     
@@ -510,10 +517,10 @@ void loop() {
     if ( TOM ) {
         Serial.println("TOM");
         
-        uint16_t  xyear = isParityValid(NPLYEARPARITY);
-        uint16_t  xday = isParityValid(NPLDAYPARITY); 
-        uint16_t  xdow = isParityValid(NPLDOWPARITY); 
-        uint16_t  xtime = isParityValid(NPLTIMEPARITY);
+        boolean  xyear = isParityValid(NPLYEARPARITY);
+        boolean  xday = isParityValid(NPLDAYPARITY); 
+        boolean  xdow = isParityValid(NPLDOWPARITY); 
+        boolean  xtime = isParityValid(NPLTIMEPARITY);
         saveBuffers();
         secondOffset = 0;
         clearBuffers();   
