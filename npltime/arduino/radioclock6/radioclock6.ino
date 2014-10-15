@@ -134,7 +134,7 @@ unsigned int oddParity(uint16_t x) {
 uint16_t isParityValid(struct timeElement element) {
   //check_mem();
   uint16_t timedata = GetChunk(element.offset,element.parityNumBytes,element.buffer);
-  byte sentParity = GetChunk(element.parityBit,1,element.buffer);
+  byte sentParity = GetChunk(element.parityBit,1,B_BUFFER);
   unsigned int calcParity = oddParity(timedata);
   Serial.print(timedata);
   Serial.print("\t");
@@ -274,11 +274,17 @@ void fallingPulse() {
 
 void printBufferBits() {
 
-  for (uint8_t i=0;i<=secondOffset;i++) {
+  for (uint8_t i=0;i<secondOffset;i++) {
     uint8_t bufferElement=i / 8;
     uint8_t bufferElementOffset = i % 8 ^ 0x07 ;
     Serial.print(bitRead(aBuffer[bufferElement],bufferElementOffset));  
-    //Serial.print(bitRead(bBuffer[bufferElement],bufferElementOffset)); 
+    }
+    
+  Serial.print(F("\n"));
+  for (uint8_t i=0;i<secondOffset;i++) {
+    uint8_t bufferElement=i / 8;
+    uint8_t bufferElementOffset = i % 8 ^ 0x07 ;
+    Serial.print(bitRead(bBuffer[bufferElement],bufferElementOffset));  
     }
     
   Serial.print(F("\n"));
@@ -463,7 +469,7 @@ void setup() {
 attachInterrupt(0, risingPulse, FALLING) ;
 attachInterrupt(1, fallingPulse, RISING) ;
 
-Serial.begin(115200);           // set up Serial library at 19200 bps
+Serial.begin(9600);           // set up Serial library at 19200 bps
 Serial.println(F("Clock Starting"));  // Say something to show we have restarted.
 pinMode(ledPin, OUTPUT); // set up the ledpin
 // set all the values of the current second to 1
@@ -499,6 +505,7 @@ void loop() {
     Serial.print("\n");
     printBufferBits();
 #endif
+ printBufferBits();
     
     
     
