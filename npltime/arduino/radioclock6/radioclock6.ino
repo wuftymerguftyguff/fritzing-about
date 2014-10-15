@@ -14,20 +14,7 @@
 
 const byte CURRENTCENTURY=20;
 
-/*
-uint8_t * heapptr, * stackptr;
-
-void check_mem() {
-  stackptr = (uint8_t *)malloc(4);          // use stackptr temporarily
-  heapptr = stackptr;                     // save value of heap pointer
-  free(stackptr);      // free up the memory again (sets stackptr to 0)
-  stackptr =  (uint8_t *)(SP);           // save value of stack pointer
-}
-*/
-
-
 //#define DEBUG 1
-
 
 //Pin connected to Pin 12 of 74HC595 (Latch)
 const uint8_t latchPin = 9;
@@ -127,11 +114,10 @@ unsigned int oddParity(uint16_t x) {
    y = y ^ (y >> 8);
    y = y ^ (y >>16);
    y = ~y & 1;
-   return y;
-   
+   return y;   
 }
 
-uint16_t isParityValid(struct timeElement element) {
+boolean isParityValid(struct timeElement element) {
   //check_mem();
   uint16_t timedata = GetChunk(element.offset,element.parityNumBytes,element.buffer);
   byte sentParity = GetChunk(element.parityBit,1,B_BUFFER);
@@ -141,11 +127,14 @@ uint16_t isParityValid(struct timeElement element) {
   Serial.print(calcParity);
   Serial.print("\t");
   Serial.print(sentParity);
+  Serial.print("\t");
+  boolean retval = (calcParity == sentParity);
+  Serial.print(retval);
   Serial.print("\n");
   //Serial.flush();
   //uint16_t whatthebloodyhell = 13579;
   //oddParity(bits);
-  return timedata;
+  return retval;
 }
 
 /*
