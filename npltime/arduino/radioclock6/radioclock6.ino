@@ -128,18 +128,18 @@ boolean isParityValid(struct timeElement element) {
   uint16_t timedata = GetChunk(element.offset,element.parityNumBytes,element.buffer);
   byte sentParity = GetChunk(element.parityBit,1,B_BUFFER);
   unsigned int calcParity = oddParity(timedata);
+  boolean retval = (calcParity == sentParity);
+#ifdef DEBUG  
   Serial.print(timedata);
   Serial.print("\t");
   Serial.print(calcParity);
   Serial.print("\t");
   Serial.print(sentParity);
   Serial.print("\t");
-  boolean retval = (calcParity == sentParity);
   Serial.print(retval);
   Serial.print("\n");
-  //Serial.flush();
-  //uint16_t whatthebloodyhell = 13579;
-  //oddParity(bits);
+  Serial.flush();
+#endif  
   return retval;
 }
 
@@ -520,11 +520,12 @@ void loop() {
             && isParityValid(NPLDOWPARITY)
             && isParityValid(NPLTIMEPARITY) ) {
               NMEA_NAVIGATION_WARNING = *GPS_LOCK;
+              saveBuffers();
             } else {
               NMEA_NAVIGATION_WARNING = *GPS_NO_LOCK;
             }
             
-        saveBuffers();
+        
         secondOffset = 0;
         clearBuffers();   
         TOM = false;   
