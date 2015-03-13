@@ -322,11 +322,12 @@ void printTime() {
   int nplYear = getTimeVal(NPLYEAR);
   // $--ZDA,hhmmss.ss,xx,xx,xxxx,xx,xx*hh<CR><LF>
   
-  sprintf(buffer, " %02d/%02d/20%02d %02d:%02d:%02d ", getTimeVal(NPLDAY),
-                                      getTimeVal(NPLMONTH),
-                                      getTimeVal(NPLYEAR),
-                                      getTimeVal(NPLHOUR),
-                                      getTimeVal(NPLMINUTE),
+  sprintf(buffer, " %02d/%02d/20%02d %02d:%02d:%02d ",
+                                      nplDay,
+                                      nplMonth,
+                                      nplYear,
+                                      nplHour,
+                                      nplMinute,
                                       secondOffset                            
   );
  // Serial.println(buffer);
